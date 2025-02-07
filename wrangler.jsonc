@@ -12,7 +12,20 @@
   },
 	"ai": {
 		"binding": "AI"
-	}
+	},
+	"vectorize": [
+		{
+			"binding": "VECTORIZE",
+			"index_name": "rag-ai-tutorial-vector-index"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "rag-ai-tutorial-database",
+			"database_id": "10bd74aa-2d1c-4368-b3a4-0e53f055b96"
+		}
+	]
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
