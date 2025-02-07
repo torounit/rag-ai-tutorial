@@ -13,6 +13,14 @@
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		const answer = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+			messages: [
+				{
+					role: 'user',
+					content: 'What is the square root of 9?',
+				},
+			],
+		});
+		return new Response(JSON.stringify(answer));
 	},
 } satisfies ExportedHandler<Env>;
