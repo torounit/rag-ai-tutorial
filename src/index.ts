@@ -4,6 +4,8 @@ import { zValidator } from '@hono/zod-validator';
 import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1';
 import { notes } from './db/schema';
 
+export { RAGWorkflow } from './RAGWorkflow';
+
 const app = new Hono<{ Bindings: Env; Variables: { db: DrizzleD1Database } }>();
 app.use(async (c, next) => {
 	const db = drizzle(c.env.DB);
