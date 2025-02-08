@@ -4,17 +4,24 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --remote",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+		"generate": "drizzle-kit generate",
+		"local:migration": "wrangler d1 migrations apply rag-ai-tutorial-database --local",
+		"remote:migration": "wrangler d1 migrations apply rag-ai-tutorial-database --remote"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.6.4",
     "@cloudflare/workers-types": "^4.20250204.0",
+    "drizzle-kit": "^0.30.4",
     "prettier": "^3.4.2",
     "typescript": "^5.5.2",
     "vitest": "2.1.8",
     "wrangler": "^3.107.3"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.2"
   }
 }
