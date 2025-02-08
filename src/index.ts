@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1';
 import { notes } from './db/schema';
+import { eq } from 'drizzle-orm';
 
 export { RAGWorkflow } from './RAGWorkflow';
 
@@ -27,7 +28,7 @@ app.get('/', async (c) => {
 });
 
 app.post(
-	'/',
+	'/notes',
 	zValidator(
 		'json',
 		z.object({
@@ -36,9 +37,26 @@ app.post(
 	),
 	async (c) => {
 		const { text } = c.req.valid('json');
+		await c.env.RAG_WORKFLOW.create({ params: { text } });
+		return c.text('Created note', 201);
+	},
+);
+
+app.delete(
+	'/notes/:id',
+	zValidator(
+		'param',
+		z.object({
+			id: z.preprocess((v) => Number(v), z.number()),
+		}),
+	),
+	async (c) => {
+		const { id } = c.req.valid('param');
+		console.log(id);
 		const db = c.get('db');
-		const result = await db.insert(notes).values({ text }).returning();
-		return c.json(result);
+		await db.delete(notes).where(eq(notes.id, id)).returning();
+		await c.env.VECTORIZE.deleteByIds([id.toString()]);
+		return c.status(204);
 	},
 );
 
