@@ -31,7 +31,7 @@
 		{
 			"name": "rag-ai-tutorial",
 			"binding": "RAG_WORKFLOW",
-			"class_name": "RagWorkflow"
+			"class_name": "RAGWorkflow"
 		}
 	]
 	/**
