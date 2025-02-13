@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1';
 import { notes } from './db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 export { RAGWorkflow } from './RAGWorkflow';
 
@@ -13,19 +13,62 @@ app.use(async (c, next) => {
 	c.set('db', db);
 	await next();
 });
+app.get(
+	'/',
+	zValidator(
+		'query',
+		z.object({
+			question: z.string().optional(),
+		}),
+	),
+	async (c) => {
+		const { question } = c.req.valid('query');
+		if (!question) {
+			return c.json('Please provide a question', 400);
+		}
 
-app.get('/', async (c) => {
-	const answer = await c.env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-		messages: [
+		const embeddings = await c.env.AI.run('@cf/baai/bge-base-en-v1.5', {
+			text: question,
+		});
+		const vec = embeddings.data[0];
+
+		const query = await c.env.VECTORIZE.query(vec, { topK: 3 });
+		const ids = query.matches
+			.filter(({ score }) => score > 0.7)
+			.map(({ id }) => Number(id))
+			.filter((id) => !isNaN(id));
+
+		const fetchedNotes = await c
+			.get('db')
+			.select()
+			.from(notes)
+			.where(inArray(notes.id, ids));
+
+		console.log(JSON.stringify(fetchedNotes));
+
+		const contextList = fetchedNotes.map((note) => `- ${note.text}`).join('\n');
+		const message = contextList ? `Context: \n${contextList}` : '';
+
+		const answer = await c.env.AI.run(
+			'@cf/meta/llama-3.3-70b-instruct-fp8-fast',
 			{
-				role: 'user',
-				content: 'What is the square root of 9?',
+				messages: [
+					...(message ? [{ role: 'system', content: message }] : []),
+					{
+						role: 'system',
+						content: `When answering the question or responding, use the context provided, if it is provided and relevant.`,
+					},
+					{
+						role: 'user',
+						content: question,
+					},
+				],
 			},
-		],
-	});
+		);
 
-	return c.json(answer);
-});
+		return c.json(answer);
+	},
+);
 
 app.get('/notes', async (c) => {
 	const db = c.get('db');
