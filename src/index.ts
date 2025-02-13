@@ -27,17 +27,25 @@ app.get('/', async (c) => {
 	return c.json(answer);
 });
 
+app.get('/notes', async (c) => {
+	const db = c.get('db');
+	const results = await db.select().from(notes);
+	return c.json(results);
+});
+
 app.post(
 	'/notes',
 	zValidator(
 		'json',
 		z.object({
-			text: z.string(),
+			notes: z.array(z.string()),
 		}),
 	),
 	async (c) => {
-		const { text } = c.req.valid('json');
-		await c.env.RAG_WORKFLOW.create({ params: { text } });
+		const { notes } = c.req.valid('json');
+		for (const text of notes) {
+			await c.env.RAG_WORKFLOW.create({ params: { text } });
+		}
 		return c.text('Created note', 201);
 	},
 );
